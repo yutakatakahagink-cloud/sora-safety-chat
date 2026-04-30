@@ -1,4 +1,5 @@
-# GitHub Pages: public/ を静的サイトとして公開（携帯から https でアクセス可能）
+# GitHub Pages: public/ を静的サイトとして公開
+# 参考: https://github.com/actions/starter-workflows/blob/main/pages/static.yml
 name: Deploy GitHub Pages
 
 on:
@@ -13,7 +14,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -35,4 +36,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
