@@ -1733,6 +1733,72 @@ body {
   line-height: 1.45;
 }
 
+.patrol-morning-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.patrol-morning-recall {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.patrol-morning-recall-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.patrol-morning-recall-title {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.patrol-morning-recall-meta {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.patrol-morning-recall-body {
+  margin: 0 0 10px;
+  padding: 10px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: rgba(10, 22, 40, 0.55);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-main);
+}
+
+.patrol-morning-recall-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.patrol-morning-recall-note {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 .patrol-photo-block {
   background: rgba(16, 29, 53, 0.35);
   border: 1px solid var(--border);

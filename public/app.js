@@ -637,12 +637,16 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       if (tab !== 'chat') hideChatPresenter();
       if (tab === 'chat') setTimeout(scheduleIdleYawn, 4000);
-      if (tab === 'patrol') initPatrolChecklistOnce();
+      if (tab === 'patrol') {
+        initPatrolChecklistOnce();
+        refreshPatrolMorningRecallBar();
+      }
     });
   });
 
   // ===== 安全巡視パトロール =====
   var PATROL_STORAGE_KEY = 'sora_patrol_v1';
+  var PATROL_AM_SNAPSHOT_KEY = 'sora_patrol_am_snapshot_v1';
   var patrolSlots = [];
   var patrolPlaceholderHtml = '';
   var patrolChecklistBuilt = false;
@@ -810,6 +814,146 @@ document.addEventListener('DOMContentLoaded', function() {
     mount.addEventListener('click', onPatrolMarkGridClick);
     patrolChecklistBuilt = true;
     loadPatrolDraft();
+    refreshPatrolMorningRecallBar();
+  }
+
+  function readPatrolMorningSnapshot() {
+    try {
+      var raw = localStorage.getItem(PATROL_AM_SNAPSHOT_KEY);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (!o || o.v !== 1) return null;
+      return o;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function refreshPatrolMorningRecallBar() {
+    var snap = readPatrolMorningSnapshot();
+    var btn = $('btnPatrolRecallMorning');
+    if (btn) btn.disabled = !snap;
+  }
+
+  function deletePatrolMorningSnapshot() {
+    try { localStorage.removeItem(PATROL_AM_SNAPSHOT_KEY); } catch (e2) {}
+    refreshPatrolMorningRecallBar();
+    var p = $('patrolMorningRecallPanel');
+    if (p) p.hidden = true;
+  }
+
+  function patrolSym(v) {
+    if (v === 'ok') return '〇';
+    if (v === 'ng') return '✖';
+    return '・';
+  }
+
+  function buildPatrolMorningSnapshotText(o) {
+    if (!o) return '';
+    var checks = o.checks || {};
+    var lines = [];
+    lines.push('保存日時: ' + (o.savedAt ? new Date(o.savedAt).toLocaleString('ja-JP') : ''));
+    lines.push('巡回時間（午前）: ' + (o.timeAm ? o.timeAm : '（未入力）'));
+    lines.push('保存時の写真枚数（参考）: ' + (o.photoCount != null ? o.photoCount : 0) + ' 枚');
+    lines.push('');
+    function appendSide(title, sections, letter) {
+      lines.push('--- ' + title + '（午前列） ---');
+      for (var s = 0; s < sections.length; s++) {
+        var sec = sections[s];
+        lines.push('■ ' + sec.category);
+        for (var k = 0; k < sec.items.length; k++) {
+          var key = letter + '-' + s + '-' + k;
+          var ch = checks[key] || { am: '', pm: '' };
+          var am = normalizePatrolShiftVal(ch.am);
+          lines.push('  ' + patrolItemMark(k) + ' ' + sec.items[k] + '  午前: ' + patrolSym(am));
+        }
+      }
+      lines.push('');
+    }
+    if (typeof PATROL_CHECKLIST_LEFT !== 'undefined') appendSide('左欄', PATROL_CHECKLIST_LEFT, 'L');
+    if (typeof PATROL_CHECKLIST_RIGHT !== 'undefined') appendSide('右欄', PATROL_CHECKLIST_RIGHT, 'R');
+    lines.push('【午前の巡視結果】');
+    lines.push('午前 巡視者: ' + (o.inspectorAm || ''));
+    lines.push('午前 巡視時作業: ' + String(o.workAm || '').replace(/\n/g, ' '));
+    if (o.memo) lines.push('備考（保存時）: ' + String(o.memo).replace(/\n/g, ' '));
+    return lines.join('\n');
+  }
+
+  function fillPatrolMorningRecallPanel(snap) {
+    var body = $('patrolMorningRecallBody');
+    var meta = $('patrolMorningRecallMeta');
+    if (meta && snap && snap.savedAt) meta.textContent = '保存: ' + new Date(snap.savedAt).toLocaleString('ja-JP');
+    else if (meta) meta.textContent = '';
+    if (body) body.textContent = buildPatrolMorningSnapshotText(snap);
+  }
+
+  function togglePatrolMorningRecallPanel() {
+    var p = $('patrolMorningRecallPanel');
+    var snap = readPatrolMorningSnapshot();
+    if (!snap) {
+      alert('先に「午前の巡視を保存（午後に引き継ぐ）」を実行してください。');
+      return;
+    }
+    if (!p) return;
+    if (!p.hidden) {
+      p.hidden = true;
+      return;
+    }
+    fillPatrolMorningRecallPanel(snap);
+    p.hidden = false;
+    try {
+      p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e3) {}
+  }
+
+  function savePatrolMorningSnapshot() {
+    initPatrolChecklistOnce();
+    try {
+      var o = {
+        v: 1,
+        savedAt: new Date().toISOString(),
+        timeAm: $('patrolTimeAm') ? $('patrolTimeAm').value : '',
+        inspectorAm: $('patrolInspectorAm') ? $('patrolInspectorAm').value : '',
+        workAm: $('patrolWorkAm') ? $('patrolWorkAm').value : '',
+        memo: $('patrolMemo') ? $('patrolMemo').value : '',
+        checks: collectPatrolChecks(),
+        photoCount: patrolSlots.length
+      };
+      localStorage.setItem(PATROL_AM_SNAPSHOT_KEY, JSON.stringify(o));
+      refreshPatrolMorningRecallBar();
+      var hint = $('patrolSaveHint');
+      if (hint) {
+        hint.textContent = '午前の記録を保存しました。午後の巡視時に「保存した午前の結果を呼び起こす」で表示し、「午前列・午前欄に反映」でフォームへ戻せます。';
+      }
+      savePatrolDraft();
+    } catch (e) {
+      var h2 = $('patrolSaveHint');
+      if (h2) h2.textContent = '午前の保存に失敗しました。ブラウザの保存領域を確認してください。';
+    }
+  }
+
+  function applyPatrolMorningSnapshotAmOnly(snapshot) {
+    if (!snapshot) return;
+    initPatrolChecklistOnce();
+    if ($('patrolTimeAm')) $('patrolTimeAm').value = snapshot.timeAm || '';
+    if ($('patrolInspectorAm')) $('patrolInspectorAm').value = snapshot.inspectorAm || '';
+    if ($('patrolWorkAm')) $('patrolWorkAm').value = snapshot.workAm || '';
+    var snapC = snapshot.checks || {};
+    var cur = collectPatrolChecks();
+    var keys = collectAllPatrolKeys();
+    var merged = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var c = cur[key] || { am: '', pm: '' };
+      var s = snapC[key] || { am: '', pm: '' };
+      merged[key] = {
+        am: normalizePatrolShiftVal(s.am),
+        pm: normalizePatrolShiftVal(c.pm)
+      };
+    }
+    applyPatrolChecks(merged);
+    var hint = $('patrolSaveHint');
+    if (hint) hint.textContent = '保存した午前の内容を、午前列・午前欄に反映しました（午後はそのまま）。';
   }
 
   function collectPatrolChecks() {
@@ -1140,6 +1284,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     if ($('btnPatrolSaveDraft')) $('btnPatrolSaveDraft').addEventListener('click', savePatrolDraft);
+    if ($('btnPatrolSaveMorning')) $('btnPatrolSaveMorning').addEventListener('click', savePatrolMorningSnapshot);
+    if ($('btnPatrolRecallMorning')) $('btnPatrolRecallMorning').addEventListener('click', togglePatrolMorningRecallPanel);
+    if ($('btnPatrolDismissMorningRecall')) {
+      $('btnPatrolDismissMorningRecall').addEventListener('click', function() {
+        var p = $('patrolMorningRecallPanel');
+        if (p) p.hidden = true;
+      });
+    }
+    if ($('btnPatrolApplyMorningAm')) {
+      $('btnPatrolApplyMorningAm').addEventListener('click', function() {
+        var snap = readPatrolMorningSnapshot();
+        if (!snap) {
+          alert('保存された午前の記録がありません。');
+          return;
+        }
+        applyPatrolMorningSnapshotAmOnly(snap);
+      });
+    }
+    if ($('btnPatrolDeleteMorningSnapshot')) {
+      $('btnPatrolDeleteMorningSnapshot').addEventListener('click', function() {
+        if (!readPatrolMorningSnapshot()) return;
+        if (!confirm('保存した「午前の巡視（午後に引き継ぐ）」を削除しますか？')) return;
+        deletePatrolMorningSnapshot();
+        var hint = $('patrolSaveHint');
+        if (hint) hint.textContent = '午前の保存を削除しました。';
+      });
+    }
     if ($('btnPatrolAiFill')) $('btnPatrolAiFill').addEventListener('click', function() { runPatrolAutoCheck(); });
     if ($('btnPatrolExport')) {
       $('btnPatrolExport').addEventListener('click', function() {
@@ -1160,6 +1331,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if ($('btnPatrolReset')) {
       $('btnPatrolReset').addEventListener('click', function() {
         if (!confirm('チェックと入力をすべて消しますか？（下書き保存データも削除）')) return;
+        if (readPatrolMorningSnapshot()) {
+          if (confirm('保存した「午前の巡視（午後に引き継ぐ）」も削除しますか？')) deletePatrolMorningSnapshot();
+        }
         try { localStorage.removeItem(PATROL_STORAGE_KEY); } catch (e2) {}
         patrolSlots = [];
         renderPatrolStrip();
@@ -1168,10 +1342,14 @@ document.addEventListener('DOMContentLoaded', function() {
           if (el) el.value = '';
         });
         document.querySelectorAll('#patrolChecklistMount button.patrol-mark').forEach(function(b) { setPatrolMarkButton(b, ''); });
+        var pnl = $('patrolMorningRecallPanel');
+        if (pnl) pnl.hidden = true;
+        refreshPatrolMorningRecallBar();
         var hint = $('patrolSaveHint');
         if (hint) hint.textContent = 'クリアしました。';
       });
     }
+    refreshPatrolMorningRecallBar();
   })();
 
   // ===== 写真機能（複数枚・HEIC対応） =====
