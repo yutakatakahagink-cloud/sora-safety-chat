@@ -1599,3 +1599,222 @@ body {
     font-size: 0.7rem;
   }
 }
+
+/* ========== 安全巡視パトロール ========== */
+.patrol-section {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px calc(20px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.patrol-hero {
+  background: rgba(16, 29, 53, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 16px;
+}
+
+.patrol-title {
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  margin: 0 0 6px;
+}
+
+.patrol-lead {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.patrol-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.patrol-time-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.patrol-time-input {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+}
+
+.patrol-photo-block {
+  background: rgba(16, 29, 53, 0.35);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.patrol-subtitle {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+
+.patrol-checklist-wrap {
+  background: rgba(16, 29, 53, 0.45);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.patrol-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 28px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding-right: 4px;
+}
+
+.patrol-legend-am { color: #7ec8ff; min-width: 3.2rem; text-align: center; }
+.patrol-legend-pm { color: #c9b8ff; min-width: 3.2rem; text-align: center; }
+
+.patrol-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .patrol-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.patrol-col {
+  min-width: 0;
+}
+
+.patrol-cat {
+  margin-bottom: 14px;
+}
+
+.patrol-cat:last-child {
+  margin-bottom: 0;
+}
+
+.patrol-cat h4 {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.patrol-row {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr 2.5rem 2.5rem;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.patrol-row-num {
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+}
+
+.patrol-row input[type='checkbox'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0 auto;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.patrol-results {
+  background: rgba(16, 29, 53, 0.45);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.patrol-result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 640px) {
+  .patrol-result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.patrol-result-card {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius);
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.patrol-result-card h4 {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+.patrol-field-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 8px 0 4px;
+}
+
+.patrol-text-input,
+.patrol-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+}
+
+.patrol-memo {
+  margin-top: 4px;
+}
+
+.patrol-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.patrol-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+}

@@ -546,8 +546,301 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       if (tab !== 'chat') hideChatPresenter();
       if (tab === 'chat') setTimeout(scheduleIdleYawn, 4000);
+      if (tab === 'patrol') initPatrolChecklistOnce();
     });
   });
+
+  // ===== 安全巡視パトロール =====
+  var PATROL_STORAGE_KEY = 'sora_patrol_v1';
+  var patrolSlots = [];
+  var patrolPlaceholderHtml = '';
+  var patrolChecklistBuilt = false;
+
+  function patrolItemMark(i) {
+    if (i >= 0 && i < 20) return String.fromCharCode(0x2460 + i);
+    return String(i + 1) + '.';
+  }
+
+  function buildPatrolColumnHtml(side, sections) {
+    var html = '<div class="patrol-col" data-patrol-side="' + side + '">';
+    for (var s = 0; s < sections.length; s++) {
+      var sec = sections[s];
+      html += '<div class="patrol-cat"><h4>' + escapeHtml(sec.category) + '</h4>';
+      for (var k = 0; k < sec.items.length; k++) {
+        var key = side + '-' + s + '-' + k;
+        html += '<div class="patrol-row" data-patrol-key="' + key + '">'
+          + '<span class="patrol-row-num">' + patrolItemMark(k) + '</span>'
+          + '<span>' + escapeHtml(sec.items[k]) + '</span>'
+          + '<input type="checkbox" class="patrol-cb-am" aria-label="午前" data-patrol-k="' + key + '" data-shift="am">'
+          + '<input type="checkbox" class="patrol-cb-pm" aria-label="午後" data-patrol-k="' + key + '" data-shift="pm">'
+          + '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function initPatrolChecklistOnce() {
+    if (patrolChecklistBuilt) return;
+    var mount = $('patrolChecklistMount');
+    if (!mount || typeof PATROL_CHECKLIST_LEFT === 'undefined') return;
+    mount.innerHTML = buildPatrolColumnHtml('L', PATROL_CHECKLIST_LEFT) + buildPatrolColumnHtml('R', PATROL_CHECKLIST_RIGHT);
+    patrolChecklistBuilt = true;
+    loadPatrolDraft();
+  }
+
+  function collectPatrolChecks() {
+    var checks = {};
+    document.querySelectorAll('#patrolChecklistMount input[type="checkbox"][data-patrol-k]').forEach(function(inp) {
+      var k = inp.getAttribute('data-patrol-k');
+      var sh = inp.getAttribute('data-shift');
+      if (!k || !sh) return;
+      if (!checks[k]) checks[k] = { am: false, pm: false };
+      checks[k][sh] = !!inp.checked;
+    });
+    return checks;
+  }
+
+  function applyPatrolChecks(checks) {
+    if (!checks) return;
+    document.querySelectorAll('#patrolChecklistMount input[type="checkbox"][data-patrol-k]').forEach(function(inp) {
+      var k = inp.getAttribute('data-patrol-k');
+      var sh = inp.getAttribute('data-shift');
+      if (!k || !checks[k]) return;
+      if (sh === 'am') inp.checked = !!checks[k].am;
+      if (sh === 'pm') inp.checked = !!checks[k].pm;
+    });
+  }
+
+  function patrolDraftPayload() {
+    return {
+      v: 1,
+      savedAt: new Date().toISOString(),
+      timeAm: $('patrolTimeAm') ? $('patrolTimeAm').value : '',
+      timePm: $('patrolTimePm') ? $('patrolTimePm').value : '',
+      checks: collectPatrolChecks(),
+      inspectorAm: $('patrolInspectorAm') ? $('patrolInspectorAm').value : '',
+      inspectorPm: $('patrolInspectorPm') ? $('patrolInspectorPm').value : '',
+      workAm: $('patrolWorkAm') ? $('patrolWorkAm').value : '',
+      workPm: $('patrolWorkPm') ? $('patrolWorkPm').value : '',
+      memo: $('patrolMemo') ? $('patrolMemo').value : '',
+      photoCount: patrolSlots.length
+    };
+  }
+
+  function savePatrolDraft() {
+    try {
+      var payload = patrolDraftPayload();
+      localStorage.setItem(PATROL_STORAGE_KEY, JSON.stringify(payload));
+      var hint = $('patrolSaveHint');
+      if (hint) hint.textContent = '下書きを保存しました（この端末のブラウザ内）。写真は容量の都合、下書きには含めていません。';
+    } catch (e) {
+      var h2 = $('patrolSaveHint');
+      if (h2) h2.textContent = '保存に失敗しました。ブラウザの保存領域を確認してください。';
+    }
+  }
+
+  function loadPatrolDraft() {
+    try {
+      var raw = localStorage.getItem(PATROL_STORAGE_KEY);
+      if (!raw) return;
+      var o = JSON.parse(raw);
+      if (!o || o.v !== 1) return;
+      if ($('patrolTimeAm') && o.timeAm) $('patrolTimeAm').value = o.timeAm;
+      if ($('patrolTimePm') && o.timePm) $('patrolTimePm').value = o.timePm;
+      if ($('patrolInspectorAm') && o.inspectorAm) $('patrolInspectorAm').value = o.inspectorAm;
+      if ($('patrolInspectorPm') && o.inspectorPm) $('patrolInspectorPm').value = o.inspectorPm;
+      if ($('patrolWorkAm') && o.workAm) $('patrolWorkAm').value = o.workAm;
+      if ($('patrolWorkPm') && o.workPm) $('patrolWorkPm').value = o.workPm;
+      if ($('patrolMemo') && o.memo) $('patrolMemo').value = o.memo;
+      applyPatrolChecks(o.checks);
+    } catch (e) {}
+  }
+
+  function buildPatrolReportText() {
+    var checks = collectPatrolChecks();
+    var lines = [];
+    lines.push('【安全巡視パトロール】');
+    lines.push('作成: ' + new Date().toLocaleString('ja-JP'));
+    lines.push('');
+    lines.push('巡回時間（午前）: ' + ($('patrolTimeAm') && $('patrolTimeAm').value ? $('patrolTimeAm').value : '（未入力）'));
+    lines.push('巡回時間（午後）: ' + ($('patrolTimePm') && $('patrolTimePm').value ? $('patrolTimePm').value : '（未入力）'));
+    lines.push('添付写真枚数: ' + patrolSlots.length + ' 枚');
+    lines.push('');
+    function appendSide(title, sections, side) {
+      lines.push('--- ' + title + ' ---');
+      for (var s = 0; s < sections.length; s++) {
+        var sec = sections[s];
+        lines.push('■ ' + sec.category);
+        for (var k = 0; k < sec.items.length; k++) {
+          var key = side + '-' + s + '-' + k;
+          var ch = checks[key] || { am: false, pm: false };
+          var am = ch.am ? '○' : '・';
+          var pm = ch.pm ? '○' : '・';
+          lines.push('  ' + patrolItemMark(k) + ' ' + sec.items[k]);
+          lines.push('    午前: ' + am + '  午後: ' + pm);
+        }
+      }
+      lines.push('');
+    }
+    if (typeof PATROL_CHECKLIST_LEFT !== 'undefined') appendSide('左欄', PATROL_CHECKLIST_LEFT, 'L');
+    if (typeof PATROL_CHECKLIST_RIGHT !== 'undefined') appendSide('右欄', PATROL_CHECKLIST_RIGHT, 'R');
+    lines.push('【巡視結果】');
+    lines.push('午前 巡視者: ' + ($('patrolInspectorAm') ? $('patrolInspectorAm').value : ''));
+    lines.push('午前 巡視時作業: ' + ($('patrolWorkAm') ? $('patrolWorkAm').value.replace(/\n/g, ' ') : ''));
+    lines.push('午後 巡視者: ' + ($('patrolInspectorPm') ? $('patrolInspectorPm').value : ''));
+    lines.push('午後 巡視時作業: ' + ($('patrolWorkPm') ? $('patrolWorkPm').value.replace(/\n/g, ' ') : ''));
+    lines.push('備考: ' + ($('patrolMemo') ? $('patrolMemo').value.replace(/\n/g, ' ') : ''));
+    return lines.join('\n');
+  }
+
+  function renderPatrolStrip() {
+    var strip = $('patrolPhotoStrip');
+    var ph = $('patrolUploadPlaceholder');
+    var area = $('patrolUploadArea');
+    if (!strip || !ph || !area) return;
+    if (patrolSlots.length === 0) {
+      strip.hidden = true;
+      strip.innerHTML = '';
+      ph.innerHTML = patrolPlaceholderHtml;
+      ph.style.display = '';
+      area.classList.remove('has-image');
+      $('btnPatrolClearPhotos').hidden = true;
+      $('patrolPhotoCountLine').hidden = true;
+      return;
+    }
+    ph.style.display = 'none';
+    strip.hidden = false;
+    strip.innerHTML = '';
+    area.classList.add('has-image');
+    $('btnPatrolClearPhotos').hidden = false;
+    $('patrolPhotoCountLine').hidden = false;
+    $('patrolPhotoCountText').textContent = String(patrolSlots.length);
+    patrolSlots.forEach(function(slot, idx) {
+      var wrap = document.createElement('div');
+      wrap.className = 'photo-thumb-wrap';
+      var img = document.createElement('img');
+      img.src = slot.dataUrl;
+      img.alt = '巡視写真' + (idx + 1);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'photo-thumb-remove';
+      btn.setAttribute('aria-label', 'この写真を削除');
+      btn.textContent = '×';
+      btn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        patrolSlots.splice(idx, 1);
+        renderPatrolStrip();
+      });
+      wrap.appendChild(img);
+      wrap.appendChild(btn);
+      strip.appendChild(wrap);
+    });
+  }
+
+  function handlePatrolFiles(files) {
+    if (!files || !files.length) return Promise.resolve();
+    var arr = Array.prototype.slice.call(files, 0);
+    var room = MAX_PHOTOS - patrolSlots.length;
+    if (room <= 0) {
+      alert('写真は最大' + MAX_PHOTOS + '枚までです。');
+      return Promise.resolve();
+    }
+    if (arr.length > room) {
+      alert('最大' + MAX_PHOTOS + '枚までです。先頭' + room + '枚のみ追加します。');
+      arr = arr.slice(0, room);
+    }
+    var skipped = 0;
+    return arr.reduce(function(chain, file) {
+      return chain.then(function() {
+        return processOneFile(file).then(function(slot) {
+          if (slot) patrolSlots.push(slot);
+          else skipped++;
+        });
+      });
+    }, Promise.resolve()).then(function() {
+      if (skipped) alert('画像以外のファイルはスキップしました（JPEG / PNG / HEIC対応）');
+      renderPatrolStrip();
+    });
+  }
+
+  (function initPatrolUi() {
+    var pMount = $('patrolChecklistMount');
+    if (!pMount) return;
+    patrolPlaceholderHtml = $('patrolUploadPlaceholder') ? $('patrolUploadPlaceholder').innerHTML : '';
+
+    var ipc = $('inputPatrolCapture');
+    var ipg = $('inputPatrolGallery');
+    if ($('btnPatrolCapture') && ipc) {
+      $('btnPatrolCapture').addEventListener('click', function(e) {
+        e.stopPropagation();
+        ipc.value = '';
+        ipc.click();
+      });
+    }
+    if ($('btnPatrolGallery') && ipg) {
+      $('btnPatrolGallery').addEventListener('click', function(e) {
+        e.stopPropagation();
+        ipg.value = '';
+        ipg.click();
+      });
+    }
+    if ($('patrolUploadArea') && ipg) {
+      $('patrolUploadArea').addEventListener('click', function(e) {
+        if (e.target.closest('.photo-thumb-remove')) return;
+        if (e.target.closest('.photo-thumb-wrap')) return;
+        ipg.value = '';
+        ipg.click();
+      });
+    }
+    if ($('btnPatrolClearPhotos')) {
+      $('btnPatrolClearPhotos').addEventListener('click', function(e) {
+        e.stopPropagation();
+        patrolSlots = [];
+        renderPatrolStrip();
+      });
+    }
+    if (ipc) ipc.addEventListener('change', function() {
+      if (ipc.files && ipc.files.length) handlePatrolFiles(ipc.files);
+    });
+    if (ipg) ipg.addEventListener('change', function() {
+      if (ipg.files && ipg.files.length) handlePatrolFiles(ipg.files);
+    });
+
+    if ($('btnPatrolSaveDraft')) $('btnPatrolSaveDraft').addEventListener('click', savePatrolDraft);
+    if ($('btnPatrolExport')) {
+      $('btnPatrolExport').addEventListener('click', function() {
+        initPatrolChecklistOnce();
+        var text = buildPatrolReportText();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            var hint = $('patrolSaveHint');
+            if (hint) hint.textContent = 'レポートをクリップボードにコピーしました。メールやTeamsに貼り付けて送れます。';
+          }).catch(function() {
+            prompt('以下をコピーしてください:', text);
+          });
+        } else {
+          prompt('以下をコピーしてください:', text);
+        }
+      });
+    }
+    if ($('btnPatrolReset')) {
+      $('btnPatrolReset').addEventListener('click', function() {
+        if (!confirm('チェックと入力をすべて消しますか？（下書き保存データも削除）')) return;
+        try { localStorage.removeItem(PATROL_STORAGE_KEY); } catch (e2) {}
+        patrolSlots = [];
+        renderPatrolStrip();
+        ['patrolTimeAm', 'patrolTimePm', 'patrolInspectorAm', 'patrolInspectorPm', 'patrolWorkAm', 'patrolWorkPm', 'patrolMemo'].forEach(function(id) {
+          var el = $(id);
+          if (el) el.value = '';
+        });
+        document.querySelectorAll('#patrolChecklistMount input[type="checkbox"]').forEach(function(c) { c.checked = false; });
+        var hint = $('patrolSaveHint');
+        if (hint) hint.textContent = 'クリアしました。';
+      });
+    }
+  })();
 
   // ===== 写真機能（複数枚・HEIC対応） =====
   var inputCapture = $('inputCapture');

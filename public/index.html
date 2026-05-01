@@ -70,6 +70,7 @@
     <!-- タブ -->
     <nav class="tab-nav">
       <button class="tab-btn active" data-tab="photo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>写真診断</span></button>
+      <button class="tab-btn" data-tab="patrol"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>安全巡視</span></button>
       <button class="tab-btn" data-tab="chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>チャット相談</span></button>
     </nav>
 
@@ -102,6 +103,78 @@
           <div class="result-header"><span>SORAの診断結果</span></div>
           <div class="result-content" id="photoResultContent"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== 安全巡視パトロールタブ ===== -->
+    <div id="tabPatrol" class="tab-content">
+      <div class="patrol-section">
+        <div class="patrol-hero">
+          <h2 class="patrol-title">安全巡視パトロール</h2>
+          <p class="patrol-lead">1日2回（午前・午後）。現場写真を添え、各項目をチェックしてください。</p>
+          <div class="patrol-times">
+            <label class="patrol-time-label">巡回時間（午前）<input type="time" id="patrolTimeAm" class="patrol-time-input"></label>
+            <label class="patrol-time-label">巡回時間（午後）<input type="time" id="patrolTimePm" class="patrol-time-input"></label>
+          </div>
+        </div>
+
+        <div class="patrol-photo-block">
+          <h3 class="patrol-subtitle">現場の写真</h3>
+          <div class="upload-area patrol-upload-area" id="patrolUploadArea">
+            <div id="patrolUploadPlaceholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <p class="upload-text">タップで写真を追加（最大8枚）</p>
+              <p class="upload-hint">HEIC/JPEG 対応</p>
+            </div>
+            <div id="patrolPhotoStrip" class="photo-preview-strip" hidden></div>
+          </div>
+          <p class="photo-count-line" id="patrolPhotoCountLine" hidden><span id="patrolPhotoCountText">0</span> / 8 枚</p>
+          <div class="photo-actions">
+            <button type="button" class="btn-primary" id="btnPatrolCapture">📷 撮影する</button>
+            <button type="button" class="btn-secondary" id="btnPatrolGallery">📁 ファイル選択</button>
+          </div>
+          <button type="button" class="btn-clear-photos" id="btnPatrolClearPhotos" hidden>🗑 写真をすべて削除</button>
+          <input type="file" id="inputPatrolCapture" accept="image/*,.heic,.heif" capture="environment" style="display:none">
+          <input type="file" id="inputPatrolGallery" accept="image/*,.heic,.heif" multiple style="display:none">
+        </div>
+
+        <div class="patrol-checklist-wrap">
+          <h3 class="patrol-subtitle">チェック項目（午前・午後）</h3>
+          <div class="patrol-legend">
+            <span class="patrol-legend-am">午前</span>
+            <span class="patrol-legend-pm">午後</span>
+          </div>
+          <div id="patrolChecklistMount" class="patrol-columns"></div>
+        </div>
+
+        <div class="patrol-results">
+          <h3 class="patrol-subtitle">【 巡視結果 】</h3>
+          <div class="patrol-result-grid">
+            <div class="patrol-result-card">
+              <h4>午前</h4>
+              <label class="patrol-field-label">安全巡視者</label>
+              <input type="text" id="patrolInspectorAm" class="patrol-text-input" placeholder="氏名">
+              <label class="patrol-field-label">巡視時作業</label>
+              <textarea id="patrolWorkAm" class="patrol-textarea" rows="3" placeholder="例：切削工、舗装打換え など"></textarea>
+            </div>
+            <div class="patrol-result-card">
+              <h4>午後</h4>
+              <label class="patrol-field-label">安全巡視者</label>
+              <input type="text" id="patrolInspectorPm" class="patrol-text-input" placeholder="氏名">
+              <label class="patrol-field-label">巡視時作業</label>
+              <textarea id="patrolWorkPm" class="patrol-textarea" rows="3" placeholder="例：切削工、舗装打換え など"></textarea>
+            </div>
+          </div>
+          <label class="patrol-field-label">備考・特記事項</label>
+          <textarea id="patrolMemo" class="patrol-textarea patrol-memo" rows="4" placeholder="気づいたこと、是正依頼、写真番号との対応など"></textarea>
+        </div>
+
+        <div class="patrol-actions-bar">
+          <button type="button" class="btn-secondary" id="btnPatrolSaveDraft">下書きを保存</button>
+          <button type="button" class="btn-primary" id="btnPatrolExport">レポートをコピー</button>
+          <button type="button" class="btn-clear-photos" id="btnPatrolReset">入力をクリア</button>
+        </div>
+        <p id="patrolSaveHint" class="patrol-hint" aria-live="polite"></p>
       </div>
     </div>
 
@@ -217,6 +290,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="laws-db.js"></script>
-  <script src="app.js?v=svgchroma1"></script>
+  <script src="patrol-checklist.js"></script>
+  <script src="app.js?v=patrol1"></script>
 </body>
 </html>
