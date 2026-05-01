@@ -111,7 +111,7 @@
       <div class="patrol-section">
         <div class="patrol-hero">
           <h2 class="patrol-title">安全巡視パトロール</h2>
-          <p class="patrol-lead">1日2回（午前・午後）。現場写真を添え、各項目をチェックしてください。</p>
+          <p class="patrol-lead">1日2回（午前・午後）のチェック欄に沿って項目を確認します。現場写真は1枚でも可です（その1枚を午前・午後の両方の確認に使って問題ありません）。必要なら複数枚まで追加できます。</p>
           <div class="patrol-times">
             <label class="patrol-time-label">巡回時間（午前）<input type="time" id="patrolTimeAm" class="patrol-time-input"></label>
             <label class="patrol-time-label">巡回時間（午後）<input type="time" id="patrolTimePm" class="patrol-time-input"></label>
@@ -123,8 +123,8 @@
           <div class="upload-area patrol-upload-area" id="patrolUploadArea">
             <div id="patrolUploadPlaceholder">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <p class="upload-text">タップで写真を追加（最大8枚）</p>
-              <p class="upload-hint">HEIC/JPEG 対応</p>
+              <p class="upload-text">タップで写真を追加（1枚〜最大8枚）</p>
+              <p class="upload-hint">HEIC/JPEG 対応・1枚だけでも巡視できます</p>
             </div>
             <div id="patrolPhotoStrip" class="photo-preview-strip" hidden></div>
           </div>
@@ -291,6 +291,6 @@
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="laws-db.js"></script>
   <script src="patrol-checklist.js"></script>
-  <script src="app.js?v=patrol1"></script>
+  <script src="app.js?v=patrol2"></script>
 </body>
 </html>

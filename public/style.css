@@ -1664,6 +1664,43 @@ body {
   padding: 12px;
 }
 
+/* 巡視：1枚でも可。追加用タイル（サムネと同じ高さで並べる） */
+.patrol-strip-add {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  box-sizing: border-box;
+  border-radius: var(--radius);
+  border: 2px dashed var(--border-strong);
+  background: rgba(16, 29, 53, 0.45);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  line-height: 1.15;
+  font-family: var(--font-main);
+}
+
+.patrol-strip-add-plus {
+  font-size: 1.35rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.patrol-strip-add-text {
+  font-size: 0.68rem;
+}
+
+.patrol-strip-add:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: var(--accent-glow);
+}
+
 .patrol-subtitle {
   margin: 0 0 10px;
   font-size: 0.88rem;

@@ -667,6 +667,9 @@ document.addEventListener('DOMContentLoaded', function() {
     lines.push('巡回時間（午前）: ' + ($('patrolTimeAm') && $('patrolTimeAm').value ? $('patrolTimeAm').value : '（未入力）'));
     lines.push('巡回時間（午後）: ' + ($('patrolTimePm') && $('patrolTimePm').value ? $('patrolTimePm').value : '（未入力）'));
     lines.push('添付写真枚数: ' + patrolSlots.length + ' 枚');
+    if (patrolSlots.length === 1) {
+      lines.push('（現場写真1枚を、午前・午後の確認記録に共通して使用）');
+    }
     lines.push('');
     function appendSide(title, sections, side) {
       lines.push('--- ' + title + ' ---');
@@ -737,6 +740,22 @@ document.addEventListener('DOMContentLoaded', function() {
       wrap.appendChild(btn);
       strip.appendChild(wrap);
     });
+    if (patrolSlots.length < MAX_PHOTOS) {
+      var addTile = document.createElement('button');
+      addTile.type = 'button';
+      addTile.className = 'patrol-strip-add';
+      addTile.setAttribute('aria-label', '写真を追加（1枚のままでもレポート作成可）');
+      addTile.innerHTML = '<span class="patrol-strip-add-plus">＋</span><span class="patrol-strip-add-text">追加</span>';
+      addTile.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        var ipg = $('inputPatrolGallery');
+        if (ipg) {
+          ipg.value = '';
+          ipg.click();
+        }
+      });
+      strip.appendChild(addTile);
+    }
   }
 
   function handlePatrolFiles(files) {
@@ -790,6 +809,7 @@ document.addEventListener('DOMContentLoaded', function() {
       $('patrolUploadArea').addEventListener('click', function(e) {
         if (e.target.closest('.photo-thumb-remove')) return;
         if (e.target.closest('.photo-thumb-wrap')) return;
+        if (e.target.closest('.patrol-strip-add')) return;
         ipg.value = '';
         ipg.click();
       });
