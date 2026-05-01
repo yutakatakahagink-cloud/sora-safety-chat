@@ -12,9 +12,9 @@
   --accent-dim: #0099bb;
   --accent-glow: rgba(0, 212, 255, 0.15);
   --accent-glow-strong: rgba(0, 212, 255, 0.3);
-  --text-primary: #e8edf5;
-  --text-secondary: #8899b0;
-  --text-muted: #5a6a80;
+  --text-primary: #ffffff;
+  --text-secondary: #f2f5fb;
+  --text-muted: #e8edf5;
   --danger: #ff4757;
   --warning: #ffa502;
   --success: #2ed573;

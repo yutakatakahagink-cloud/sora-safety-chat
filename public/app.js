@@ -754,6 +754,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var hasPm = !!(tp && String(tp).trim() !== '');
     if (hasAm && !hasPm) return { am: true, pm: false };
     if (!hasAm && hasPm) return { am: false, pm: true };
+    var snap = readPatrolMorningSnapshot();
+    if (snap && snap.timeAm && hasAm && hasPm) {
+      if (String(ta).trim() === String(snap.timeAm).trim()) {
+        return { am: false, pm: true };
+      }
+    }
     return { am: true, pm: true };
   }
 
@@ -906,6 +912,17 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e3) {}
   }
 
+  function patrolChecksAmOnlyFrom(fullChecks) {
+    var keys = collectAllPatrolKeys();
+    var out = {};
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var c = (fullChecks && fullChecks[k]) || { am: '', pm: '' };
+      out[k] = { am: normalizePatrolShiftVal(c.am), pm: '' };
+    }
+    return out;
+  }
+
   function savePatrolMorningSnapshot() {
     initPatrolChecklistOnce();
     try {
@@ -916,7 +933,7 @@ document.addEventListener('DOMContentLoaded', function() {
         inspectorAm: $('patrolInspectorAm') ? $('patrolInspectorAm').value : '',
         workAm: $('patrolWorkAm') ? $('patrolWorkAm').value : '',
         memo: $('patrolMemo') ? $('patrolMemo').value : '',
-        checks: collectPatrolChecks(),
+        checks: patrolChecksAmOnlyFrom(collectPatrolChecks()),
         photoCount: patrolSlots.length
       };
       localStorage.setItem(PATROL_AM_SNAPSHOT_KEY, JSON.stringify(o));
@@ -1125,7 +1142,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mask.am && !mask.pm) {
           hint.textContent = 'AIが午前のみ反映しました（午後の巡回時刻を入れてから再度「自動チェック」すると午後列のみ更新できます）。参考です。必ず現場で確認してください。';
         } else if (!mask.am && mask.pm) {
-          hint.textContent = 'AIが午後のみ反映しました（午前の巡回時刻のみのときは午前列のみ更新されます）。参考です。必ず現場で確認してください。';
+          var sn = readPatrolMorningSnapshot();
+          var tAm = $('patrolTimeAm') && $('patrolTimeAm').value;
+          if (sn && sn.timeAm && tAm && String(tAm).trim() === String(sn.timeAm).trim()) {
+            hint.textContent = 'AIが午後列のみ反映しました（午前列は「午後に引き継ぐ」保存時の巡回時刻と同じため維持）。参考です。必ず現場で確認してください。';
+          } else {
+            hint.textContent = 'AIが午後のみ反映しました（午前の巡回時刻のみのときは午前列のみ更新されます）。参考です。必ず現場で確認してください。';
+          }
         } else {
           hint.textContent = 'AIが〇／✖を入力しました（参考です。必ず現場で確認のうえ修正してください）。';
         }

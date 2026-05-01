@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=svgchroma1">
+  <link rel="stylesheet" href="style.css?v=patrolread1">
   <link rel="preload" href="images/sora-scene.png" as="image">
 </head>
 <body>
@@ -116,7 +116,7 @@
             <label class="patrol-time-label">巡回時間（午前）<input type="time" id="patrolTimeAm" class="patrol-time-input"></label>
             <label class="patrol-time-label">巡回時間（午後）<input type="time" id="patrolTimePm" class="patrol-time-input"></label>
           </div>
-          <p class="patrol-time-hint">※「写真から自動チェック」は、午前の時刻だけ入れているときは午前列のみ、午後だけなら午後列のみ更新します。両方空欄のときは午前・午後の両方を更新します。</p>
+          <p class="patrol-time-hint">※「写真から自動チェック」は、午前の時刻だけ入れているときは午前列のみ、午後だけなら午後列のみ更新します。両方空欄のときは午前・午後の両方を更新します。※「午前の巡視を保存」後に午前・午後の時刻を両方入れた状態で、午前時刻が保存時と同じだと、午後列のみAI更新します（午前列は上書きしません）。両方をAIし直すときは午前時刻を少し変えてから実行してください。</p>
           <div class="patrol-morning-bar">
             <button type="button" class="btn-secondary" id="btnPatrolSaveMorning">午前の巡視を保存（午後に引き継ぐ）</button>
             <button type="button" class="btn-secondary" id="btnPatrolRecallMorning" disabled>保存した午前の結果を呼び起こす</button>
@@ -320,6 +320,6 @@
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="laws-db.js"></script>
   <script src="patrol-checklist.js"></script>
-  <script src="app.js?v=patrol5"></script>
+  <script src="app.js?v=patrol6"></script>
 </body>
 </html>
