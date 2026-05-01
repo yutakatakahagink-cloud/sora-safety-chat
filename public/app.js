@@ -481,6 +481,92 @@ document.addEventListener('DOMContentLoaded', function() {
   var uploadPlaceholderHtml = '';
   var processing = false;
 
+  function openPhotoLightbox(dataUrl, alt) {
+    var lb = $('photoLightbox');
+    var im = $('photoLightboxImg');
+    if (!lb || !im || !dataUrl) return;
+    im.src = dataUrl;
+    im.alt = alt || '拡大画像';
+    lb.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePhotoLightbox() {
+    var lb = $('photoLightbox');
+    var im = $('photoLightboxImg');
+    if (lb) lb.style.display = 'none';
+    if (im) {
+      im.removeAttribute('src');
+      im.alt = '';
+    }
+    document.body.style.overflow = '';
+  }
+
+  (function initPhotoLightbox() {
+    if ($('photoLightboxClose')) {
+      $('photoLightboxClose').addEventListener('click', function(e) {
+        e.preventDefault();
+        closePhotoLightbox();
+      });
+    }
+    if ($('photoLightboxBackdrop')) {
+      $('photoLightboxBackdrop').addEventListener('click', function(e) {
+        e.preventDefault();
+        closePhotoLightbox();
+      });
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      var lb = $('photoLightbox');
+      if (lb && lb.style.display === 'flex') closePhotoLightbox();
+    });
+  })();
+
+  function extractImageFilesFromList(fileList) {
+    if (!fileList || !fileList.length) return [];
+    var arr = [];
+    for (var i = 0; i < fileList.length; i++) {
+      var f = fileList[i];
+      var name = (f.name || '').toLowerCase();
+      if (f.type && f.type.indexOf('image/') === 0) arr.push(f);
+      else if (name.endsWith('.heic') || name.endsWith('.heif')) arr.push(f);
+    }
+    return arr;
+  }
+
+  function bindImageDropZone(areaEl, handleFilesFn) {
+    if (!areaEl || typeof handleFilesFn !== 'function') return;
+    areaEl.addEventListener('dragenter', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    areaEl.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      areaEl.classList.add('dragover');
+    });
+    areaEl.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var rt = e.relatedTarget;
+      if (rt && areaEl.contains(rt)) return;
+      areaEl.classList.remove('dragover');
+    });
+    areaEl.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      areaEl.classList.remove('dragover');
+      var dt = e.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return;
+      var imgs = extractImageFilesFromList(dt.files);
+      if (!imgs.length) {
+        alert('画像ファイル（JPEG / PNG / HEIC 等）をドロップしてください。');
+        return;
+      }
+      handleFilesFn(imgs);
+    });
+  }
+
   // --- スプラッシュ ---
   setTimeout(function() {
     $('splash').classList.add('fade-out');
@@ -657,6 +743,33 @@ document.addEventListener('DOMContentLoaded', function() {
     return out;
   }
 
+  function getPatrolAiShiftMask() {
+    var ta = $('patrolTimeAm') && $('patrolTimeAm').value;
+    var tp = $('patrolTimePm') && $('patrolTimePm').value;
+    var hasAm = !!(ta && String(ta).trim() !== '');
+    var hasPm = !!(tp && String(tp).trim() !== '');
+    if (hasAm && !hasPm) return { am: true, pm: false };
+    if (!hasAm && hasPm) return { am: false, pm: true };
+    return { am: true, pm: true };
+  }
+
+  function applyPatrolChecksWithMask(merged, mask) {
+    if (!merged || !mask) return;
+    var current = collectPatrolChecks();
+    var keys = collectAllPatrolKeys();
+    var final = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      var m = merged[key] || { am: '', pm: '' };
+      var c = current[key] || { am: '', pm: '' };
+      final[key] = {
+        am: mask.am ? m.am : c.am,
+        pm: mask.pm ? m.pm : c.pm
+      };
+    }
+    applyPatrolChecks(final);
+  }
+
   function onPatrolMarkGridClick(ev) {
     var btn = ev.target.closest('button.patrol-mark');
     if (!btn || !btn.getAttribute('data-patrol-k')) return;
@@ -820,11 +933,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (processing) return;
 
+    var mask = getPatrolAiShiftMask();
     var manifest = buildPatrolManifestText();
-    var instruct = '【指示】\n'
-      + '添付の現場写真だけを根拠に、上記リストの各キーについて午前(am)・午後(pm)を判定してください。\n'
+    var shiftRule = '';
+    if (mask.am && !mask.pm) {
+      shiftRule = '【重要】ユーザーは「午前の巡回時刻」のみ入力している。各キーは am（午前）列のみ判定し、pm（午後）は必ず空文字 "" にすること（午後巡視は未実施の想定）。\n';
+    } else if (!mask.am && mask.pm) {
+      shiftRule = '【重要】ユーザーは「午後の巡回時刻」のみ入力している。pm のみ判定し、am は必ず空文字 "" にすること。\n';
+    } else {
+      shiftRule = '午前(am)・午後(pm)の両列を判定すること。\n';
+    }
+    var sameBothHint = (mask.am && mask.pm)
+      ? '写真が1枚のみで午前・午後の区別が写真から読み取れないときは、am と pm に原則同じ値でよい。\n'
+      : '';
+    var instruct = '【指示】\n' + shiftRule
+      + '添付の現場写真だけを根拠に判定する。\n'
       + '各値は次の文字列のみ: "ok"（良好・問題なし）、"ng"（是正が必要または不備・危険がうかがえる）、""（写真から判断不可）。\n'
-      + '写真が1枚のみのときは、午前・午後に原則同じ値でよい（時刻差が分かる情報がなければ）。\n'
+      + sameBothHint
       + '推測で断定しない。写っていない項目は "" にする。\n'
       + 'JSONのトップレベルはキー名（例 "L-0-0"）のみ。値は必ず {"am":"ok"|"ng"|"","pm":"ok"|"ng"|""} の形。\n'
       + 'リストの全キーを漏れなく含めること。JSON以外は一切出力しない。';
@@ -851,9 +976,15 @@ document.addEventListener('DOMContentLoaded', function() {
     callGemini(key, body).then(function(text) {
       var parsed = parsePatrolAiJson(text);
       var merged = mergePatrolAiParsed(parsed);
-      applyPatrolChecks(merged);
+      applyPatrolChecksWithMask(merged, mask);
       if (hint) {
-        hint.textContent = 'AIが〇／✖を入力しました（参考です。必ず現場で確認のうえ修正してください）。';
+        if (mask.am && !mask.pm) {
+          hint.textContent = 'AIが午前のみ反映しました（午後の巡回時刻を入れてから再度「自動チェック」すると午後列のみ更新できます）。参考です。必ず現場で確認してください。';
+        } else if (!mask.am && mask.pm) {
+          hint.textContent = 'AIが午後のみ反映しました（午前の巡回時刻のみのときは午前列のみ更新されます）。参考です。必ず現場で確認してください。';
+        } else {
+          hint.textContent = 'AIが〇／✖を入力しました（参考です。必ず現場で確認のうえ修正してください）。';
+        }
       }
     }).catch(function(err) {
       var em = friendlyError(err.message || String(err)).replace(/\n/g, ' ');
@@ -894,6 +1025,11 @@ document.addEventListener('DOMContentLoaded', function() {
       var img = document.createElement('img');
       img.src = slot.dataUrl;
       img.alt = '巡視写真' + (idx + 1);
+      img.className = 'photo-thumb-img';
+      img.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        openPhotoLightbox(slot.dataUrl, img.alt);
+      });
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'photo-thumb-remove';
@@ -984,6 +1120,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.patrol-strip-add')) return;
         ipg.value = '';
         ipg.click();
+      });
+      bindImageDropZone($('patrolUploadArea'), function(filesArr) {
+        handlePatrolFiles(filesArr);
       });
     }
     if ($('btnPatrolClearPhotos')) {
@@ -1140,6 +1279,11 @@ document.addEventListener('DOMContentLoaded', function() {
       var img = document.createElement('img');
       img.src = slot.dataUrl;
       img.alt = '写真' + (idx + 1);
+      img.className = 'photo-thumb-img';
+      img.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        openPhotoLightbox(slot.dataUrl, img.alt);
+      });
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'photo-thumb-remove';
@@ -1187,6 +1331,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   inputGallery.addEventListener('change', function() {
     if (inputGallery.files && inputGallery.files.length) handlePhotoFiles(inputGallery.files);
+  });
+  bindImageDropZone($('uploadArea'), function(filesArr) {
+    handlePhotoFiles(filesArr);
   });
 
   // --- 写真診断 ---

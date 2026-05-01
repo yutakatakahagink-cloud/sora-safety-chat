@@ -81,7 +81,7 @@
           <div id="uploadPlaceholder">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <p class="upload-text">現場の写真を撮影またはアップロード</p>
-            <p class="upload-hint">タップで追加・複数枚選択可（最大8枚）</p>
+            <p class="upload-hint">タップで追加・複数枚選択可（最大8枚）／PCからドラッグ＆ドロップ可</p>
           </div>
           <div id="photoPreviewStrip" class="photo-preview-strip" hidden></div>
         </div>
@@ -116,6 +116,7 @@
             <label class="patrol-time-label">巡回時間（午前）<input type="time" id="patrolTimeAm" class="patrol-time-input"></label>
             <label class="patrol-time-label">巡回時間（午後）<input type="time" id="patrolTimePm" class="patrol-time-input"></label>
           </div>
+          <p class="patrol-time-hint">※「写真から自動チェック」は、午前の時刻だけ入れているときは午前列のみ、午後だけなら午後列のみ更新します。両方空欄のときは午前・午後の両方を更新します。</p>
         </div>
 
         <div class="patrol-photo-block">
@@ -124,7 +125,7 @@
             <div id="patrolUploadPlaceholder">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               <p class="upload-text">タップで写真を追加（1枚〜最大8枚）</p>
-              <p class="upload-hint">HEIC/JPEG 対応・1枚だけでも巡視できます</p>
+              <p class="upload-hint">HEIC/JPEG 対応・1枚だけでも巡視できます／PCからドラッグ＆ドロップ可</p>
             </div>
             <div id="patrolPhotoStrip" class="photo-preview-strip" hidden></div>
           </div>
@@ -219,6 +220,15 @@
       </div>
     </div>
 
+    <!-- 写真拡大（巡視・写真診断共通） -->
+    <div class="photo-lightbox" id="photoLightbox" style="display:none" role="dialog" aria-modal="true" aria-label="写真の拡大表示">
+      <button type="button" class="photo-lightbox__backdrop" id="photoLightboxBackdrop" aria-label="閉じる"></button>
+      <div class="photo-lightbox__frame">
+        <button type="button" class="photo-lightbox__close" id="photoLightboxClose" aria-label="閉じる">&times;</button>
+        <img class="photo-lightbox__img" id="photoLightboxImg" src="" alt="">
+      </div>
+    </div>
+
     <!-- ローディング -->
     <div class="loading-overlay" id="loadingOverlay" style="display:none">
       <div class="loading-spinner">
@@ -293,6 +303,6 @@
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="laws-db.js"></script>
   <script src="patrol-checklist.js"></script>
-  <script src="app.js?v=patrol3"></script>
+  <script src="app.js?v=patrol4"></script>
 </body>
 </html>
