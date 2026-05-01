@@ -1728,6 +1728,17 @@ body {
 .patrol-legend-am { color: #7ec8ff; min-width: 3.2rem; text-align: center; }
 .patrol-legend-pm { color: #c9b8ff; min-width: 3.2rem; text-align: center; }
 
+.patrol-legend-note {
+  margin: 0 0 10px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.patrol-photo-block .photo-actions {
+  flex-wrap: wrap;
+}
+
 .patrol-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1778,12 +1789,46 @@ body {
   text-align: center;
 }
 
-.patrol-row input[type='checkbox'] {
-  width: 1.15rem;
-  height: 1.15rem;
+.patrol-row-label {
+  min-width: 0;
+}
+
+.patrol-mark {
+  width: 100%;
+  max-width: 2.75rem;
+  min-height: 2.1rem;
   margin: 0 auto;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: rgba(10, 22, 40, 0.65);
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  font-family: var(--font-main);
   cursor: pointer;
-  accent-color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.patrol-mark:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.patrol-mark--ok {
+  border-color: rgba(46, 204, 113, 0.55);
+  background: rgba(46, 204, 113, 0.12);
+  color: #6ee7a8;
+}
+
+.patrol-mark--ng {
+  border-color: rgba(255, 107, 107, 0.55);
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff8a8a;
 }
 
 .patrol-results {
